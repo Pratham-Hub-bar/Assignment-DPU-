@@ -1,0 +1,46 @@
+module ps2_mouse(
+    input clk, reset,
+    input [7:0] ps_in,
+    output reg [7:0] byte_1, byte_2, byte_3,
+    output reg done);
+
+    reg [1:0] state = 2'b00;
+    //Three States
+    //State 0: Looking for bit[3];      State 1: Looking for byte_2;    State 2: Looking for byte_3;
+
+    always @(posedge clk, posedge reset) begin
+        if(reset) begin
+            byte_1 <= 0;
+            byte_2 <= 0;
+            byte_3 <= 0;
+            state <=0;
+            done <= 0;
+        end
+
+        else begin
+            done <= 1'b0;
+            case(state)
+                2'b00: begin    if(ps_in[3] == 1'b1) begin	//If the input' 4 bit from LSB is 1 then byte_1 is found
+                                    byte_1 <=ps_in;				                    
+			                        state <= 2'b01;		//State immediately changes to State 1
+                                end
+                                else byte_1 <=0;
+
+                                byte_2 <=0;             //So that after done is high the bytes go back to zero
+                                byte_3 <=0;
+                                
+                        end
+                2'b01:  begin
+                            byte_2 <= ps_in;			//Takes the second byte and state changes to State 2
+                            state <= 2'b10;
+                        end
+                2'b10:  begin
+                            byte_3 <= ps_in;			//Takes the third byte and state reverts back to State 0
+                            state <= 2'b00;
+                            done <= 1'b1;               //done is high for exactly one cycle as after this cycle the state goes to S0 
+                        end
+                default: state <=2'b00;
+            endcase
+        end
+    end
+endmodule
