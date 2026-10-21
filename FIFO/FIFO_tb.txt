@@ -1,0 +1,41 @@
+module fifo_tb();
+
+    parameter I = 5;
+    parameter packet_len = 8;
+
+    reg packet_valid, packet_ready, clk, reset;
+    reg [packet_len-1:0] packet_in;
+
+    wire [packet_len-1:0] packet_out;
+    wire packet_drop, packet_underflow;
+
+    fifo_1 #(.I(I), .packet_len(packet_len)) uut(.packet_valid(packet_valid), 
+        .packet_ready(packet_ready), .clk(clk), .reset(reset), .packet_in(packet_in), 
+        .packet_out(packet_out), .packet_drop(packet_drop), .packet_underflow(packet_underflow));
+
+    always #5 clk = ~clk;
+    integer i;
+    initial begin
+        clk=0;
+        packet_valid = 0;
+        packet_ready = 0;
+        reset = 0;
+        packet_in = 0;
+        
+        #5;
+        reset = 1'b1; #25;
+        reset = 1'b0; packet_valid = 1'b1; 
+
+        for(i=0; i<7; i=i+1) begin
+            packet_in = i*i; #10;
+        end
+
+        packet_ready = 1'b1; packet_in = 99; #10;
+
+        packet_valid = 1'b0; #60;
+        $stop;
+    end
+endmodule
+
+
+

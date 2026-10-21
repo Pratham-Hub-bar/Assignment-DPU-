@@ -1,0 +1,64 @@
+module fifo_1#(
+    parameter I = 5,					//No of elements in the fifo
+    parameter packet_len = 8				//Googled 'packets' and it says it is sometimes 8 bits long, hence I chose this.
+)(
+    packet_valid, packet_ready, clk, reset,
+    packet_in, packet_out, packet_drop, packet_underflow
+);
+    
+    input packet_valid, packet_ready, clk, reset;	
+    input [packet_len-1:0] packet_in;
+
+    output reg [packet_len-1:0] packet_out;
+    output reg packet_drop, packet_underflow;
+    
+    reg [packet_len-1:0] fifo [I-1:0];		//Creating an array of packets. There are I terms and each term is 8 bits long.
+    
+    wire is_full, is_empty, read_only, write_only;
+
+    integer count;
+    integer idx;
+    
+    assign is_full = (count == I);		//is_full if count reaches the max possible.
+    assign is_empty = (count == 0);		//is_empty if count is at zero ie, there are no elements.
+
+    assign read_only = (packet_ready) && !is_empty;		//start reading if packet_ready is 1 (ready to remove) and the fifo is not empty.
+    assign write_only = (packet_valid) && (!is_full || read_only); //start writing if packet_valid is 1 (valid to add) and {either the fifo is not full or a simultaneous read_only is 1}
+	
+	//If read_only = write_only = 1, then the first element is removed and immediately add a new element to the final position.
+
+    always @(posedge clk or posedge reset) begin
+        if(reset) begin
+            count <= 0;
+            packet_drop <= 1'b0;
+            packet_underflow <= 1'b0;
+            packet_out <= {packet_len{1'b0}};
+            for(idx = 0; idx < I; idx = idx + 1)
+                fifo[idx] <= 0;
+        end
+        else begin
+            packet_drop <= is_full && packet_valid && !read_only;	//packet_drop = 1 if the fifo is full and an element is to be added
+            packet_underflow <= is_empty && packet_ready && !write_only; //packet_underflow = 1 if the fifo is empty and an element is to be removed
+
+            if(read_only && write_only) begin 		//Case - 1: Simultaneous insert and delete
+                packet_out <= fifo[0];
+                for(idx = 0; idx < I-1; idx = idx + 1)	//First delete then add a new element.
+                    fifo[idx] <= fifo[idx + 1];
+                fifo[count-1] <= packet_in;
+            end
+            else if(read_only) begin			//Case - 2: Delete only.
+                packet_out <= fifo[0];
+                for(idx = 0; idx < I-1; idx = idx + 1)
+                    fifo[idx] <= fifo[idx + 1];
+                fifo[I-1] <= {packet_len{1'b0}};
+                count <= count - 1;
+            end
+            else if(write_only) begin			//Case -3: Insert only.
+                fifo[count] <= packet_in;
+                count <= count + 1;
+            end
+        end    
+    end
+
+
+endmodule
