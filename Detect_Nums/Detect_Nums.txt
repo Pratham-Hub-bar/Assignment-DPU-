@@ -1,0 +1,29 @@
+module detect_nums(
+    input x, clk, reset,
+    output reg z);
+
+    reg [3:0] register=4'bzzzz;		//Only for simulation
+    //For actual synthesis zzzz can't be used, would require 2 bit counter to start checking register after 3 clock cycles.
+
+    //Using a 4 bit register to store the values and then check if the register value equals one of the given numbers.
+
+    always @(posedge clk) begin
+	if(reset)
+		register <= 4'd0;
+	else
+        	register [3:0] <= {register[2:0], x};		//At every posedge of clock a new value of x is inserted to the register. 
+    end
+
+    always @(*) begin
+        case(register)
+            4'd2: z=1'b1;
+            4'd4: z=1'b1;
+            4'd5: z=1'b1;					//Checking for the value at the register and if it matches then the output is one.
+            4'd8: z=1'b1;
+            4'd14: z=1;
+            default: z=1'b0;
+        endcase
+    end
+endmodule
+        
+    

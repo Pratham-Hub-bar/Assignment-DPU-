@@ -1,0 +1,39 @@
+module Detect_Nums_tb();
+    wire z;
+    reg x, reset, clk;
+
+    detect_nums uut(.x(x), .z(z),.reset(reset), .clk(clk));
+    always #1 clk = ~clk;
+
+    initial begin
+        clk = 0; x= 1'b0;
+        reset = 1; #4;
+        
+        reset =0;   
+        x=1'b0; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b0; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b1; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b0; #2;
+        x=1'b0; #2;
+        x=1'b1; #2;
+        x=1'b1; #2;
+
+        $stop;
+    end
+endmodule
+        
